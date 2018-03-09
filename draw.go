@@ -180,6 +180,8 @@ func makeBezierCoefs(p0, p1, p2, p3 float64) (*Matrix, error) {
 	return mat.Mult(h)
 }
 
+// TODO: maybe combine with hermite bc a lot of duplicate code?
+// Or make a separate parametric fxn
 func (m *Matrix) AddBezier(x0, y0, x1, y1, x2, y2, x3, y3, stepSize float64) error {
 	xC, err := makeBezierCoefs(x0, x1, x2, x3)
 	if err != nil {
