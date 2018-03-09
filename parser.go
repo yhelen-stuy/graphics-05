@@ -100,6 +100,19 @@ func ParseFile(filename string, t *Matrix, e *Matrix, image *Image) error {
 				continue
 			}
 
+		case "bezier":
+			args := getArgs(scanner)
+			if err := checkArgCount(args, 8); err != nil {
+				fmt.Println(err)
+				continue
+			}
+			fargs := numerize(args)
+			err := e.AddBezier(fargs[0], fargs[1], fargs[2], fargs[3], fargs[4], fargs[5], fargs[6], fargs[7], 0.01)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
 		case "apply":
 			fmt.Println(t)
 			// TODO: Error handling
@@ -107,7 +120,7 @@ func ParseFile(filename string, t *Matrix, e *Matrix, image *Image) error {
 
 		case "display":
 			image.Clear()
-			image.DrawLines(e, Color{r: 0, b: 0, g: 255})
+			image.DrawLines(e, Color{r: 0, b: 0, g: 0})
 			image.Display()
 
 		case "save":
@@ -117,7 +130,7 @@ func ParseFile(filename string, t *Matrix, e *Matrix, image *Image) error {
 				continue
 			}
 			image.Clear()
-			image.DrawLines(e, Color{r: 0, b: 0, g: 255})
+			image.DrawLines(e, Color{r: 0, b: 0, g: 0})
 			image.SavePPM(args[0])
 
 		case "quit":

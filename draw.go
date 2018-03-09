@@ -108,6 +108,24 @@ func (image Image) drawLineOctant8(c Color, lA, lB, x0, y0, x1, y1 int) error {
 	return nil
 }
 
+func (m *Matrix) AddCircle(cx, cy, cz, r float64) {
+	var oldX, oldY float64 = -1, -1
+	// TODO: No magic numbers wow i have so much to fix
+	for i := 0; i <= 100; i++ {
+		var t float64 = float64(i) / float64(100)
+		x := r*math.Cos(2*math.Pi*t) + cx
+		y := r*math.Sin(2*math.Pi*t) + cy
+		if oldX < 0 || oldY < 0 {
+			oldX = x
+			oldY = y
+			continue
+		}
+		m.AddEdge(oldX, oldY, cz, x, y, cz)
+		oldX = x
+		oldY = y
+	}
+}
+
 func makeHermiteCoefs(p0, p1, rp0, rp1 float64) (*Matrix, error) {
 	h := MakeMatrix(4, 0)
 	h.AddCol([]float64{2, -3, 0, 1})
@@ -149,24 +167,6 @@ func (m *Matrix) AddHermite(x0, y0, x1, y1, rx0, ry0, rx1, ry1, stepSize float64
 	return nil
 }
 
-func (m *Matrix) AddCircle(cx, cy, cz, r float64) {
-	var oldX, oldY float64 = -1, -1
-	// TODO: No magic numbers wow i have so much to fix
-	for i := 0; i <= 100; i++ {
-		var t float64 = float64(i) / float64(100)
-		x := r*math.Cos(2*math.Pi*t) + cx
-		y := r*math.Sin(2*math.Pi*t) + cy
-		if oldX < 0 || oldY < 0 {
-			oldX = x
-			oldY = y
-			continue
-		}
-		m.AddEdge(oldX, oldY, cz, x, y, cz)
-		oldX = x
-		oldY = y
-	}
-}
-
 func makeBezierCoefs(p0, p1, p2, p3 float64) (*Matrix, error) {
 	h := MakeMatrix(4, 0)
 	h.AddCol([]float64{-1, 3, -3, 1})
@@ -178,4 +178,32 @@ func makeBezierCoefs(p0, p1, p2, p3 float64) (*Matrix, error) {
 	mat.AddCol([]float64{p0, p1, p2, p3})
 
 	return mat.Mult(h)
+}
+
+func (m *Matrix) AddBezier(x0, y0, x1, y1, x2, y2, x3, y3, stepSize float64) error {
+	xC, err := makeBezierCoefs(x0, x1, x2, x3)
+	if err != nil {
+		return err
+	}
+	yC, err := makeBezierCoefs(y0, y1, y2, y3)
+	if err != nil {
+		return err
+	}
+	// TODO: Figure out a better way to do this
+	var oldX, oldY float64 = -1, -1
+	var steps int = int(1 / stepSize)
+	for i := 0; i <= steps; i++ {
+		var t float64 = float64(i) / float64(steps)
+		x := xC.mat[0][0]*math.Pow(t, 3.0) + xC.mat[1][0]*math.Pow(t, 2.0) + xC.mat[2][0]*t + xC.mat[3][0]
+		y := yC.mat[0][0]*math.Pow(t, 3.0) + yC.mat[1][0]*math.Pow(t, 2.0) + yC.mat[2][0]*t + yC.mat[3][0]
+		if oldX < 0 || oldY < 0 {
+			oldX = x
+			oldY = y
+			continue
+		}
+		m.AddEdge(oldX, oldY, 0.0, x, y, 0.0)
+		oldX = x
+		oldY = y
+	}
+	return nil
 }
