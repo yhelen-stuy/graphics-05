@@ -19,11 +19,10 @@ func ParseFile(filename string, t *Matrix, e *Matrix, image *Image) error {
 	for scanner.Scan() {
 		switch c := strings.TrimSpace(scanner.Text()); c {
 		case "line":
-			scanner.Scan()
-			arg := strings.TrimSpace(scanner.Text())
-			args := strings.Fields(arg)
-			if len(args) != 6 {
-				fmt.Errorf("Line: Incorrect # of args. Got: %d, expected: 6\n", len(args))
+			args := getArgs(scanner)
+			if err := checkArgCount(args, 6); err != nil {
+				fmt.Println(err)
+				continue
 			}
 			fargs := numerize(args)
 			e.AddEdge(fargs[0], fargs[1], fargs[2], fargs[3], fargs[4], fargs[5])
@@ -32,33 +31,30 @@ func ParseFile(filename string, t *Matrix, e *Matrix, image *Image) error {
 			t.Ident()
 
 		case "scale":
-			scanner.Scan()
-			arg := strings.TrimSpace(scanner.Text())
-			args := strings.Fields(arg)
-			if len(args) != 3 {
-				fmt.Errorf("Scale: Incorrect # of args. Got: %d, expected: 3\n", len(args))
+			args := getArgs(scanner)
+			if err := checkArgCount(args, 3); err != nil {
+				fmt.Println(err)
+				continue
 			}
 			fargs := numerize(args)
 			scale := MakeScale(fargs[0], fargs[1], fargs[2])
 			t, _ = t.Mult(scale)
 
 		case "move":
-			scanner.Scan()
-			arg := strings.TrimSpace(scanner.Text())
-			args := strings.Fields(arg)
-			if len(args) != 3 {
-				fmt.Errorf("Translate: Incorrect # of args. Got: %d, expected: 3\n", len(args))
+			args := getArgs(scanner)
+			if err := checkArgCount(args, 3); err != nil {
+				fmt.Println(err)
+				continue
 			}
 			fargs := numerize(args)
 			translate := MakeTranslate(fargs[0], fargs[1], fargs[2])
 			t, _ = t.Mult(translate)
 
 		case "rotate":
-			scanner.Scan()
-			arg := strings.TrimSpace(scanner.Text())
-			args := strings.Fields(arg)
-			if len(args) != 2 {
-				fmt.Errorf("Rotate: Incorrect # of args. Got: %d, expected: 3\n", len(args))
+			args := getArgs(scanner)
+			if err := checkArgCount(args, 2); err != nil {
+				fmt.Println(err)
+				continue
 			}
 			// TODO: Error handling
 			deg, _ := strconv.ParseFloat(args[1], 64)
@@ -82,6 +78,20 @@ func ParseFile(filename string, t *Matrix, e *Matrix, image *Image) error {
 				continue
 			}
 
+		case "hermite":
+			fmt.Println("hermite")
+			args := getArgs(scanner)
+			if err := checkArgCount(args, 8); err != nil {
+				fmt.Println(err)
+				continue
+			}
+			fargs := numerize(args)
+			err := e.AddHermite(fargs[0], fargs[1], fargs[2], fargs[3], fargs[4], fargs[5], fargs[6], fargs[7], 0.01)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
 		case "apply":
 			fmt.Println(t)
 			// TODO: Error handling
@@ -93,11 +103,10 @@ func ParseFile(filename string, t *Matrix, e *Matrix, image *Image) error {
 			image.Display()
 
 		case "save":
-			scanner.Scan()
-			arg := strings.TrimSpace(scanner.Text())
-			args := strings.Fields(arg)
-			if len(args) != 1 {
-				fmt.Errorf("Scale: Incorrect # of args. Got: %d, expected: 3\n", len(args))
+			args := getArgs(scanner)
+			if err := checkArgCount(args, 1); err != nil {
+				fmt.Println(err)
+				continue
 			}
 			image.Clear()
 			image.DrawLines(e, Color{r: 0, b: 0, g: 255})
@@ -109,6 +118,21 @@ func ParseFile(filename string, t *Matrix, e *Matrix, image *Image) error {
 		default:
 			return errors.New("Invalid command")
 		}
+	}
+	return nil
+}
+
+func getArgs(s *bufio.Scanner) []string {
+	s.Scan()
+	arg := strings.TrimSpace(s.Text())
+	return strings.Fields(arg)
+}
+
+// Returns error if incorrect number of args, nil otherwise
+// TODO: Add funcname for better testing? idk
+func checkArgCount(args []string, expected int) error {
+	if len(args) != expected {
+		return fmt.Errorf("Error: Incorrect # of args. Got: %d, expected: %d\n", len(args), expected)
 	}
 	return nil
 }
