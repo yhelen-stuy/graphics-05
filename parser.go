@@ -78,8 +78,16 @@ func ParseFile(filename string, t *Matrix, e *Matrix, image *Image) error {
 				continue
 			}
 
+		case "circle":
+			args := getArgs(scanner)
+			if err := checkArgCount(args, 4); err != nil {
+				fmt.Println(err)
+				continue
+			}
+			fargs := numerize(args)
+			e.AddCircle(fargs[0], fargs[1], fargs[2], fargs[3])
+
 		case "hermite":
-			fmt.Println("hermite")
 			args := getArgs(scanner)
 			if err := checkArgCount(args, 8); err != nil {
 				fmt.Println(err)

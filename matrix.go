@@ -122,62 +122,6 @@ func (m *Matrix) AddCol(col []float64) error {
 	return nil
 }
 
-func makeHermiteCoefs(p0, p1, rp0, rp1 float64) (*Matrix, error) {
-	h := MakeMatrix(4, 0)
-	h.AddCol([]float64{2, -3, 0, 1})
-	h.AddCol([]float64{-2, 3, 0, 0})
-	h.AddCol([]float64{1, -2, 1, 0})
-	h.AddCol([]float64{1, -1, 0, 0})
-
-	mat := MakeMatrix(4, 0)
-	mat.AddCol([]float64{p0, p1, rp0, rp1})
-
-	return mat.Mult(h)
-}
-
-func (m *Matrix) AddHermite(x0, y0, x1, y1, rx0, ry0, rx1, ry1, stepSize float64) error {
-	fmt.Println("what")
-	xC, err := makeHermiteCoefs(x0, x1, rx0, rx1)
-	if err != nil {
-		return err
-	}
-	yC, err := makeHermiteCoefs(y0, y1, ry0, ry1)
-	if err != nil {
-		return err
-	}
-	// TODO: Figure out a better way to do this
-	var oldX, oldY float64 = -1, -1
-	var steps int = int(1 / stepSize)
-	for i := 0; i <= steps; i++ {
-		var t float64 = float64(i) / float64(steps)
-		x := xC.mat[0][0]*math.Pow(t, 3.0) + xC.mat[1][0]*math.Pow(t, 2.0) + xC.mat[2][0]*t + xC.mat[3][0]
-		y := yC.mat[0][0]*math.Pow(t, 3.0) + yC.mat[1][0]*math.Pow(t, 2.0) + yC.mat[2][0]*t + yC.mat[3][0]
-		fmt.Printf("(%.2f, %.2f)\n", x, y)
-		if oldX < 0 || oldY < 0 {
-			oldX = x
-			oldY = y
-			continue
-		}
-		m.AddEdge(oldX, oldY, 0.0, x, y, 0.0)
-		oldX = x
-		oldY = y
-	}
-	return nil
-}
-
-func makeBezierCoefs(p0, p1, p2, p3 float64) (*Matrix, error) {
-	h := MakeMatrix(4, 0)
-	h.AddCol([]float64{-1, 3, -3, 1})
-	h.AddCol([]float64{3, -6, 3, 0})
-	h.AddCol([]float64{-3, 3, 0, 0})
-	h.AddCol([]float64{1, 0, 0, 0})
-
-	mat := MakeMatrix(4, 0)
-	mat.AddCol([]float64{p0, p1, p2, p3})
-
-	return mat.Mult(h)
-}
-
 func (m *Matrix) AddPoint(x, y, z float64) {
 	p := []float64{x, y, z, 1}
 	m.AddCol(p)
