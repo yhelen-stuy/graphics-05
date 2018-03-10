@@ -137,7 +137,8 @@ func ParseFile(filename string, t *Matrix, e *Matrix, image *Image) error {
 			break
 
 		default:
-			return errors.New("Invalid command")
+			fmt.Printf("Error: Couldn't recognize command %s\n", c)
+			continue
 		}
 	}
 	return nil
